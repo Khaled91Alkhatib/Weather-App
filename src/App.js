@@ -1,13 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 
-// const api = {
-//   key: "1235472da72647339bd3b51c0c09b492",
-//   base: "https://api.openweathermap.org/data/2.5/"
-// }
+// The API key is from OpenWeather site.
+const api = {
+  key: process.env.REACT_APP_KEY,
+  base: process.env.REACT_APP_BASE
+};
 
 function App() {
+  const [query, setQuery] = useState("");
+  const [weather, setWeather] = useState({});
 
+  // This arrow function will ,upon pressing Enter, fetch the results and make them json then setting them to the state.
+  const countryWeather = event => {
+    if (event.key === "Enter") {
+      fetch(`${api.base}weather?q=${query}&units=metric&APPID=${api.key}`) // We can also use 'forecast' instead of weather.
+        .then(res => res.json())
+        .then(result => {
+          setQuery(''); // This will empty the search field after pressing Enter.
+          setWeather(result);
+          console.log(result);
+        });
+    }
+  };
+
+  // This arrow function will give us today's date.
   const dateBuilder = d => { // The d represents the date.
     let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -22,16 +39,31 @@ function App() {
 
   return (
     <div>
-      <div className="main-format">
-        <input
-          className="search-bar"
-          type="text"
-          placeholder="Search..."
-        />
-        <div className='country-data'>
-          <div>Ontario, Canada</div>
-          <div>{dateBuilder(new Date())}</div>
+      <div className={(typeof weather.main != "undefined")
+        ? ((weather.main.temp > 15)
+          ? 'warm-main-format'
+          : 'main-format')
+        : 'main-format'}>
+        <div className='centered'>
+          <input
+            className="search-bar"
+            type="text"
+            placeholder="Search..."
+            onChange={event => setQuery(event.target.value)}
+            value={query}
+            onKeyPress={countryWeather}
+          />
         </div>
+        {(typeof weather.main != "undefined") && (
+          <>
+            <div className='align'>
+              <div className='location'>{weather.name}, {weather.sys.country}</div>
+              <div className='date'>{dateBuilder(new Date())}</div>
+              <div className='temp'>{Math.round(weather.main.temp)}°c</div>
+              <div className='weather-condition'>{weather.weather[0].main}</div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
